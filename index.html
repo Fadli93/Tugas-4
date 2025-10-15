@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>To-Do List</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: "Poppins", system-ui, sans-serif;
+      }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(
+          135deg,
+          #7b6cff 0%,
+          #6b42f5 40%,
+          #7e6afc 100%
+        );
+        padding: 30px;
+      }
+
+      .container {
+        width: 380px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 22px;
+        box-shadow: 0 12px 30px rgba(8, 10, 30, 0.35);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .title {
+        text-align: center;
+        margin-bottom: 14px;
+        color: #2b2b2b;
+        font-weight: 600;
+        font-size: 18px;
+      }
+
+      /* input utama + tombol */
+      .input-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .input-row input[type="text"] {
+        flex: 1;
+        padding: 10px 12px;
+        border: 1.5px solid #e6e6ee;
+        border-radius: 8px;
+        font-size: 14px;
+        outline: none;
+      }
+      .btn-add {
+        background: #406bff;
+        color: #fff;
+        border: none;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn-add:hover {
+        filter: brightness(0.95);
+      }
+
+      /* search kecil */
+      .search-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+      .search-row input {
+        flex: 1;
+        padding: 8px 10px;
+        border: 1px solid #eef0f6;
+        border-radius: 8px;
+        font-size: 13px;
+      }
+      .search-icon {
+        background: #f3f5ff;
+        padding: 8px 10px;
+        border-radius: 8px;
+        font-size: 14px;
+        color: #6b6f8a;
+        border: 1px solid #eef0f6;
+      }
+
+      /* daftar tugas */
+      ul#taskList {
+        list-style: none;
+        max-height: 300px;
+        overflow: auto;
+        padding: 4px;
+        margin-bottom: 12px;
+      }
+      ul#taskList li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        background: #fafbff;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        border: 1px solid #f0f2ff;
+      }
+
+      .left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+      }
+      .task-text {
+        font-size: 14px;
+        color: #232323;
+        word-break: break-word;
+      }
+      li.completed .task-text {
+        text-decoration: line-through;
+        color: #8a8c98;
+        opacity: 0.9;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        white-space: nowrap;
+      }
+      .btn {
+        border: none;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn-done {
+        background: #00c46a;
+        color: #fff;
+      }
+      .btn-delete {
+        background: #ff3b3b;
+        color: #fff;
+      }
+
+      /* footer taskbar di bawah */
+      .taskbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #fbfbff;
+        border: 1px solid #eef0ff;
+        font-size: 13px;
+        color: #5b5f6f;
+      }
+
+      /* kecil responsive */
+      @media (max-width: 420px) {
+        .container {
+          width: 94%;
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" role="application" aria-label="To-Do List">
+      <div class="title">📝 To-Do List</div>
+
+      <!-- input tambah tugas -->
+      <div class="input-row">
+        <input
+          id="taskInput"
+          type="text"
+          placeholder="Tambahkan tugas..."
+          aria-label="Isi tugas baru"
+        />
+        <button id="addBtn" class="btn-add">Tambah</button>
+      </div>
+
+      <!-- search kecil di bawah input -->
+      <div class="search-row" aria-hidden="false">
+        <div class="search-icon">🔍</div>
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Cari tugas..."
+          aria-label="Cari tugas"
+        />
+      </div>
+
+      <!-- list tugas -->
+      <ul id="taskList" aria-live="polite"></ul>
+
+      <!-- taskbar bawah (menampilkan total, selesai, tersisa) -->
+      <div class="taskbar" id="taskbar">
+        <div id="countText">Menampilkan 0 tugas</div>
+        <div id="statusText">Selesai 0 • Tersisa 0</div>
+      </div>
+    </div>
+
+    <script>
+      // Elemen
+      const input = document.getElementById("taskInput");
+      const addBtn = document.getElementById("addBtn");
+      const listEl = document.getElementById("taskList");
+      const searchInput = document.getElementById("searchInput");
+      const countText = document.getElementById("countText");
+      const statusText = document.getElementById("statusText");
+
+      // data tasks (localStorage)
+      let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+      // render dengan filter optional (text)
+      function render(filter = "") {
+        // filter lowercase
+        const q = filter.trim().toLowerCase();
+        listEl.innerHTML = "";
+
+        // dapatkan tugas yang cocok
+        const visible = tasks
+          .map((t, i) => ({ ...t, index: i }))
+          .filter((item) => item.text.toLowerCase().includes(q));
+
+        // buat list
+        visible.forEach((item) => {
+          const li = document.createElement("li");
+          if (item.completed) li.classList.add("completed");
+
+          const left = document.createElement("div");
+          left.className = "left";
+
+          const span = document.createElement("div");
+          span.className = "task-text";
+          span.textContent = item.text;
+
+          left.appendChild(span);
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+
+          const doneBtn = document.createElement("button");
+          doneBtn.className = "btn btn-done";
+          doneBtn.textContent = item.completed ? "Batal" : "Selesai";
+          doneBtn.title = item.completed
+            ? "Batalkan selesai"
+            : "Tandai selesai";
+          doneBtn.onclick = () => toggleComplete(item.index);
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "btn btn-delete";
+          delBtn.textContent = "Hapus";
+          delBtn.onclick = () => deleteTask(item.index);
+
+          actions.appendChild(doneBtn);
+          actions.appendChild(delBtn);
+
+          li.appendChild(left);
+          li.appendChild(actions);
+          listEl.appendChild(li);
+        });
+
+        // update footer / taskbar
+        updateTaskbar(q);
+        // simpan
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+      }
+
+      function addTask() {
+        const text = input.value.trim();
+        if (!text) {
+          alert("Tugas tidak boleh kosong!");
+          return;
+        }
+        tasks.push({ text, completed: false });
+        input.value = "";
+        render(searchInput.value);
+      }
+
+      function toggleComplete(index) {
+        if (tasks[index]) tasks[index].completed = !tasks[index].completed;
+        render(searchInput.value);
+      }
+
+      function deleteTask(index) {
+        if (!confirm("Hapus tugas ini?")) return;
+        tasks.splice(index, 1);
+        render(searchInput.value);
+      }
+
+      function updateTaskbar(filterQuery) {
+        const q = filterQuery ? filterQuery.trim().toLowerCase() : "";
+        const visible = tasks.filter((t) => t.text.toLowerCase().includes(q));
+        const totalVisible = visible.length;
+        const doneVisible = visible.filter((t) => t.completed).length;
+        const remainingVisible = totalVisible - doneVisible;
+
+        // teks sesuai permintaan: menampilkan X tugas dan detail selesai/tersisa
+        countText.textContent = `Menampilkan ${totalVisible} tugas`;
+        statusText.textContent = `Selesai ${doneVisible} • Tersisa ${remainingVisible}`;
+      }
+
+      // event listeners
+      addBtn.addEventListener("click", addTask);
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") addTask();
+      });
+
+      // live search: render ulang sesuai query
+      searchInput.addEventListener("input", (e) => {
+        render(e.target.value);
+      });
+
+      // inisialisasi render
+      render();
+    </script>
+  </body>
+</html>
